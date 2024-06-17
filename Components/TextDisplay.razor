@@ -1,0 +1,22 @@
+@* TextDisplay component *@
+@using blazor_erp.Data;
+
+@rendermode InteractiveServer
+<p>Enter text:</p>
+@data
+<input @onkeypress="HandleKeyPress" value="@data" />
+
+@code {
+
+    [Parameter]
+    public EventCallback<KeyTransformation> OnKeyPressCallback { get; set; }
+
+    private string data;
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        KeyTransformation t = new KeyTransformation() { Key = e.Key };
+        await OnKeyPressCallback.InvokeAsync(t);
+        data += t.TransformedKey;
+    }
+}

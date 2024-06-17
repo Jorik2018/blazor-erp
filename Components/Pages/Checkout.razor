@@ -1,0 +1,76 @@
+@page "/checkout"
+@layout BlazingPizzasMainLayout
+@using blazor_erp.Data
+@using blazor_erp.Services
+@inject OrderState OrderState
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+
+<div class="top-bar">
+    <a class="logo" href="">
+        <img src="img/logo.svg" />
+    </a>
+
+    <a href="" class="nav-tab">
+        <img src="img/pizza-slice.svg" />
+        <div>Get Pizza</div>
+    </a>
+
+</div>
+
+<div class="main">
+<EditForm Model=Order.DeliveryAddress OnSubmit=CheckSubmission>
+    <div class="checkout-cols">
+
+        <div class="checkout-order-details">
+            <h4>Review order</h4>
+            <OrderReview Order="Order" />
+        </div>
+
+
+        <div class="checkout-delivery-address">
+            <h4>Deliver to...</h4>
+            @if (isError) {
+    <div class="alert alert-danger">Please enter a name and address.</div>
+  }
+            <AddressEditor Address="Order.DeliveryAddress" />
+        </div>
+    </div>
+    <button class="checkout-button btn btn-warning" disabled=@isSubmitting>
+        Place order
+    </button>
+     </EditForm>
+</div>
+
+@code {
+    
+    Order Order => OrderState.Order;
+    
+    bool isSubmitting;
+
+    bool isError = false;
+
+    async Task PlaceOrder()
+    {
+        var response = await HttpClient.PostAsJsonAsync($"{NavigationManager.BaseUri}orders", OrderState.Order);
+        var newOrderId= await response.Content.ReadFromJsonAsync<int>();
+        OrderState.ResetOrder();
+        NavigationManager.NavigateTo($"myorders/{newOrderId}");
+    }
+    
+    private async Task CheckSubmission(EditContext editContext) {
+        isSubmitting = true;
+        var model = editContext.Model as Address;
+        isError = string.IsNullOrWhiteSpace(model?.Name)
+            || string.IsNullOrWhiteSpace(model?.Line1)
+            || string.IsNullOrWhiteSpace(model?.PostalCode);
+        if (!isError)
+        {
+            await PlaceOrder();
+        }
+        isSubmitting = false;
+    }   
+
+}

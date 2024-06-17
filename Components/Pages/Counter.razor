@@ -1,0 +1,74 @@
+﻿@page "/counter"
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+
+<PageTitle>Counter</PageTitle>
+
+<h1>Counter</h1>
+
+<p role="status">Current count: @currentCount</p>
+<div @onclick="HandleDivClick">
+<button class="btn btn-primary" @onclick="IncrementCount" @onclick:stopPropagation>Click me</button>
+<button class="btn btn-primary" @onclick="ChangeFocus">Click me to change focus</button>
+<input @ref=InputField @onfocus="HandleFocus" value="@data" @onkeypress="ProcessKeyPress" @onkeypress:preventDefault />
+<button class="btn btn-primary" @onclick='mouseEvent => HandleClick(mouseEvent, "Hello")'>Click me</button>
+</div>
+@code {
+    private int currentCount = 0;
+
+ private async Task HandleDivClick()
+    {
+        await JS.InvokeVoidAsync("alert", "Div click");
+    }
+
+    private void IncrementCount(MouseEventArgs e)
+    {
+        if (e.CtrlKey) // Ctrl key pressed as well
+        {
+            currentCount += 5;
+        }
+        else
+        {
+            currentCount++;
+        }
+    }
+
+        private ElementReference InputField;
+    private string data;
+
+    private async Task ChangeFocus()
+    {
+        await InputField.FocusAsync();
+    }
+
+    private async Task HandleFocus()
+    {
+        data = "Received focus";
+    }
+
+    private async Task HandleClick(MouseEventArgs e, string msg)
+    {
+        if (e.CtrlKey) // Ctrl key pressed as well
+        {
+            await JS.InvokeVoidAsync("alert", msg);
+            currentCount += 5;
+        }
+        else
+        {
+            currentCount++;
+        }
+    }
+    
+    private async Task ProcessKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "@")
+        {
+            await JS.InvokeVoidAsync("alert", "You pressed @");
+        }
+        else
+        {
+            data += e.Key.ToUpper();
+        }
+    }
+
+}

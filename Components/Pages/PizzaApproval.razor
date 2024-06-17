@@ -1,0 +1,52 @@
+@page "/pizzaapproval"
+@using System.Globalization
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager NavManager
+@rendermode InteractiveServer
+<h1>Pizza: @PizzaName</h1>
+
+<p>Approval rating: @approvalRating</p>
+
+<p>
+    <label>
+        Set a new approval rating:
+        <input @bind="ApprovalRating" />
+    </label>
+</p>
+<p>I want to add this topping: @ToppingName</p>
+<p>I want to add this topping: @Query</p>
+@code {
+
+    private string PizzaName = "PizzaName";
+
+    private string ToppingName { get; set; }
+
+    private string Query { get; set; }
+
+    private decimal approvalRating = 1.0M;
+    private NumberStyles style = NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign;
+    private CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
+    
+    private string ApprovalRating
+    {
+        get => approvalRating.ToString("0.000", culture);
+        set
+        {
+            if (Decimal.TryParse(value, style, culture, out var number))
+            {
+                approvalRating = Math.Round(number, 3);
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+	{
+		var uri = NavManager.ToAbsoluteUri(NavManager.Uri);
+        Query = uri.Query;
+		if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("extratopping", out var extraTopping))
+		{
+			ToppingName = System.Convert.ToString(extraTopping);
+		}
+	}
+
+}

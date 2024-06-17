@@ -1,0 +1,117 @@
+@page "/fetchdata"
+
+@using blazor_erp.Data
+@using blazor_erp.Services
+@rendermode InteractiveServer
+@inject WeatherForecastService ForecastService
+
+<h1>Weather forecast</h1>
+
+<input type="number" width="2" min="0" max="@upperIndex" @onchange="ChangeForecast" value="@index"/>
+
+<EditForm Model=@currentForecast>
+    <InputDate @bind-Value=currentForecast.Date></InputDate>
+    <InputNumber @bind-Value=currentForecast.TemperatureC width="5" min="-100" step="5"></InputNumber>
+    <InputText @bind-Value=currentForecast.Summary></InputText>
+</EditForm>
+
+<EditForm Model="@shirt" OnSubmit="ValidateData">
+    <label>
+        <h3>Size</h3>
+        <InputRadioGroup Name="size" @bind-Value=shirt.Size>
+            @foreach(var shirtSize in Enum.GetValues(typeof(ShirtSize)))
+            {
+                <label>@shirtSize:
+                    <InputRadio Name="size" Value="@shirtSize"></InputRadio>
+                </label>
+                <br />
+            }
+        </InputRadioGroup>
+    </label>
+    <p></p>
+    <label>
+        <h3>Color</h3>
+        <InputRadioGroup Name="color" @bind-Value=shirt.Color>
+            @foreach(var shirtColor in Enum.GetValues(typeof(ShirtColor)))
+            {
+                <label>@shirtColor:
+                    <InputRadio Name="color" Value="@shirtColor"></InputRadio>
+                </label>
+                <br />
+            }
+        </InputRadioGroup>
+    </label>
+    <p></p>
+    <label>
+        <h3>Price</h3>
+        <InputNumber @bind-Value=shirt.Price min="0" max="100" step="0.01"></InputNumber>
+    </label>
+        <input type="submit" class="btn btn-primary" value="Save"/>
+    <p></p>
+    <div>@Message</div>
+</EditForm>
+
+
+@code {
+    private WeatherForecast[] forecasts;
+    private WeatherForecast currentForecast;
+    private int index = 0;
+    private int upperIndex = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        forecasts = await ForecastService.GetForecastAsync(DateTime.Now);
+        currentForecast = forecasts[index];
+        upperIndex = forecasts.Count() - 1;
+    }
+
+    private async Task ChangeForecast(ChangeEventArgs e)
+    {
+        index = int.Parse(e.Value as string);
+        if (index <= upperIndex && index >= 0)
+        {
+            currentForecast = forecasts[index];
+        }
+    }
+
+    private Shirt shirt = new Shirt
+    {
+        Size = ShirtSize.Large,
+        Color = ShirtColor.Blue,
+        Price = 9.99M
+    };
+private string Message = String.Empty;
+
+    // Omitted for brevity
+
+    private async Task ValidateData(EditContext editContext)
+    {
+        if (editContext.Model is not Shirt shirt)
+        {
+            Message = "T-Shirt object is invalid";
+            return;
+        }
+
+        if (shirt is { Color: ShirtColor.Red, Size: ShirtSize.ExtraLarge })
+        {
+            Message = "Red T-Shirts not available in Extra Large size";
+            return;
+        }
+
+        if (shirt is { Color: ShirtColor.Blue, Size: <= ShirtSize.Medium})
+        {
+            Message = "Blue T-Shirts not available in Small or Medium sizes";
+            return;
+        }
+
+        if (shirt is { Color: ShirtColor.White, Price: > 50 })
+        {
+            Message = "White T-Shirts must be priced at 50 or lower";
+            return;
+        }
+
+        // Data is valid
+        // Save the data
+        Message = "Changes saved";
+    }
+}
